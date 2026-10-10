@@ -88,6 +88,30 @@
             background-color: var(--primary);
         }
 
+        .nav-separator {
+            height: 1px;
+            background-color: #374151;
+            margin: 12px 16px 6px;
+        }
+
+        .sidebar-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            background-color: #111827;
+            color: #ffffff;
+            font-size: 0.9rem;
+            font-weight: 500;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .sidebar-select:focus {
+            border-color: var(--primary);
+        }
+
+
         /* Main Content */
         .main-content {
             flex: 1;
@@ -240,7 +264,7 @@
             .page-content { padding: 0; display: block !important; }
             #recibo-page { display: block !important; }
             /* Hide other pages safely */
-            #empleados-page, #novedades-page { display: none !important; }
+            #empleados-page, #novedades-page, #conceptos-page, #empresas-page, #convenios-page { display: none !important; }
             
             .card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
         }
@@ -261,9 +285,19 @@
             </div>
         </div>
         <div class="nav-items">
-            <div class="nav-item active" onclick="switchTab('empleados')">Empleados</div>
-            <div class="nav-item" onclick="switchTab('novedades')">Adelantos y Faltas</div>
-            <div class="nav-item" onclick="switchTab('recibo')">Generar Recibos</div>
+            <div class="nav-item active" data-tab="empleados" onclick="switchTab('empleados', this)">Empleados</div>
+            <div class="nav-item" data-tab="novedades" onclick="switchTab('novedades', this)">Adelantos y Faltas</div>
+            <div class="nav-item" data-tab="conceptos" onclick="switchTab('conceptos', this)">Conceptos</div>
+            <div class="nav-item" data-tab="recibo" onclick="switchTab('recibo', this)">Generar Recibos</div>
+            <div class="nav-separator"></div>
+            <div class="nav-item" data-tab="empresas" onclick="switchTab('empresas', this)">Empresas</div>
+            <div class="nav-item" data-tab="convenios" onclick="switchTab('convenios', this)">Convenios (CCT)</div>
+        </div>
+        <div style="padding: 16px 16px 0;">
+            <label style="display: block; font-size: 0.62rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: #9CA3AF; margin-bottom: 6px;">Empresa activa</label>
+            <select id="empresa-activa-select" class="sidebar-select" onchange="cambiarEmpresa(this.value)">
+                <option value="">Sin empresas cargadas</option>
+            </select>
         </div>
         <a href="https://wa.me/5492665261144" target="_blank" rel="noopener" style="margin: auto 16px 8px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #25D366; color: #ffffff; text-decoration: none; padding: 12px 16px; border-radius: 8px; font-weight: 600; font-size: 0.95rem;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
@@ -276,6 +310,117 @@
         <div class="header">
             <h2 id="page-title">Gestión de Empleados</h2>
             <div id="date-display" style="font-weight:500; color:var(--text-muted);">...</div>
+        </div>
+
+        <!-- 0. Empresas Page (Multiempresa) -->
+        <div id="empresas-page" class="page-content">
+            <div class="card">
+                <h3 style="margin-bottom: 20px;">Empresas del Sistema</h3>
+                <p style="color: var(--text-muted); margin-bottom: 0; font-size: 0.9rem;">
+                    El sistema administra varias empresas en la misma instalación. Cada empresa tiene su
+                    <strong>propia nómina de empleados, convenios, conceptos y recibos</strong>: todo lo que cargues
+                    se guarda únicamente en la empresa seleccionada. Para trabajar con una u otra, usá el selector
+                    <strong>Empresa activa</strong> del menú lateral.
+                </p>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom: 20px;">Empresas Cargadas</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Empresa</th>
+                            <th>CUIT</th>
+                            <th>Domicilio</th>
+                            <th>Pago</th>
+                            <th>Empleados</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-empresas">
+                        <!-- Llenado por JS -->
+                    </tbody>
+                </table>
+                <p style="color: var(--text-muted); margin-top: 20px; font-size: 0.85rem;">
+                    Los datos de cada empresa (razón social, CUIT, domicilio, actividad y condiciones de pago)
+                    se imprimen en el encabezado de sus recibos. Las empresas se cargan desde el estudio:
+                    para sumar una nueva empresa al sistema, comunicalo al estudio.
+                </p>
+            </div>
+        </div>
+
+        <!-- 0b. Convenios Page (CCT) -->
+        <div id="convenios-page" class="page-content">
+            <div class="card">
+                <h3 style="margin-bottom: 20px;">Convenio Colectivo de Trabajo (CCT)</h3>
+                <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">
+                    Cargá cualquier convenio (comercio, industria, construcción, personal de directiva, etc.) con sus <strong>categorías y sueldos básicos</strong>. Al dar de alta un empleado, elegir la categoría completa el sueldo básico automáticamente. Los convenios pertenecen a la empresa activa.
+                </p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nombre del Convenio</label>
+                        <input type="text" id="conv-nombre" placeholder="Ej: Comercio - CCQAR">
+                    </div>
+                    <div class="form-group">
+                        <label>Vigencia / Referencia</label>
+                        <input type="text" id="conv-vigencia" placeholder="Ej: Vigente desde 01/04/2025">
+                    </div>
+                </div>
+                <input type="hidden" id="conv-edit-id">
+                <button class="btn-primary" id="btn-guardar-convenio" onclick="guardarConvenio()">Guardar Convenio</button>
+                <button class="btn-secondary" id="btn-cancelar-convenio" onclick="cancelarEdicionConvenio()" style="margin-left: 10px; display: none;">Cancelar</button>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom: 20px;">Convenios Cargados</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Convenio</th>
+                            <th>Vigencia</th>
+                            <th>Categorías</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-convenios">
+                        <!-- Llenado por JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom: 20px;">Categorías y Sueldos Básicos</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Convenio</label>
+                        <select id="conv-categoria-de" onchange="selConvenioCategorias(this.value)"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoría / Escala</label>
+                        <input type="text" id="catconv-nombre" placeholder="Ej: Encargado 1ª">
+                    </div>
+                    <div class="form-group">
+                        <label>Sueldo Básico ($)</label>
+                        <input type="number" id="catconv-basico" placeholder="0.00">
+                    </div>
+                </div>
+                <input type="hidden" id="catconv-edit-id">
+                <button class="btn-primary" id="btn-guardar-catconv" onclick="guardarCategoria()">Agregar Categoría</button>
+                <button class="btn-secondary" id="btn-cancelar-catconv" onclick="cancelarEdicionCategoria()" style="margin-left: 10px; display: none;">Cancelar</button>
+
+                <table style="margin-top: 24px;">
+                    <thead>
+                        <tr>
+                            <th>Categoría</th>
+                            <th>Sueldo Básico</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-categorias">
+                        <!-- Llenado por JS -->
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- 1. Empleados Page -->
@@ -292,7 +437,15 @@
                         <input type="text" id="emp-cuil" placeholder="20-xxxxxxxx-x">
                     </div>
                     <div class="form-group">
-                        <label>Puesto / Categoría</label>
+                        <label>Convenio (CCT)</label>
+                        <select id="emp-convenio" onchange="cambioConvenioEmpleado()"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoría</label>
+                        <select id="emp-categoria" onchange="cambioCategoriaEmpleado()"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Puesto / Tarea</label>
                         <input type="text" id="emp-puesto" placeholder="Atención al Público">
                     </div>
                     <div class="form-group">
@@ -300,7 +453,9 @@
                         <input type="number" id="emp-sueldo" placeholder="0.00">
                     </div>
                 </div>
-                <button class="btn-primary" onclick="guardarEmpleado()">Guardar Empleado</button>
+                <input type="hidden" id="emp-edit-id">
+                <button class="btn-primary" id="btn-guardar-empleado" onclick="guardarEmpleado()">Guardar Empleado</button>
+                <button class="btn-secondary" id="btn-cancelar-empleado" onclick="cancelarEdicionEmpleado()" style="margin-left: 10px; display: none;">Cancelar</button>
             </div>
 
             <div class="card">
@@ -311,6 +466,7 @@
                             <th>Nombre</th>
                             <th>CUIL</th>
                             <th>Puesto</th>
+                            <th>Convenio / Categoría</th>
                             <th>Sueldo Básico</th>
                             <th>Acciones</th>
                         </tr>
@@ -320,6 +476,7 @@
                     </tbody>
                 </table>
             </div>
+
         </div>
 
         <!-- 2. Novedades Page (Adelantos y Faltas) -->
@@ -370,7 +527,54 @@
             </div>
         </div>
 
-        <!-- 3. Recibo Page -->
+        <!-- 3. Conceptos Configurables Page -->
+        <div id="conceptos-page" class="page-content">
+            <div class="card">
+                <h3 style="margin-bottom: 20px;">Catálogo de Conceptos</h3>
+                <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">
+                    Cargá una vez los haberes y deducciones que uses siempre (antigüedad, obra social, aportes, bonos, viáticos, etc.). Luego los aplicás a cada recibo desde la pestaña <strong>Generar Recibos</strong>.
+                </p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nombre del Concepto</label>
+                        <input type="text" id="cat-nombre" placeholder="Ej: Antigüedad">
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <select id="cat-tipo">
+                            <option value="haber">Haber (+)</option>
+                            <option value="deduccion">Deducción (-)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Monto por Defecto ($)</label>
+                        <input type="number" id="cat-monto" placeholder="Ej: 15000">
+                    </div>
+                </div>
+                <input type="hidden" id="cat-edit-id">
+                <button class="btn-primary" id="btn-guardar-concepto" onclick="guardarConcepto()">Guardar Concepto</button>
+                <button class="btn-secondary" id="btn-cancelar-concepto" onclick="cancelarEdicionConcepto()" style="margin-left: 10px; display: none;">Cancelar</button>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom: 20px;">Conceptos Cargados</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Concepto</th>
+                            <th>Tipo</th>
+                            <th>Monto por Defecto</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-catalogo-conceptos">
+                        <!-- Llenado por JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 4. Recibo Page -->
         <div id="recibo-page" class="page-content">
             <div class="card no-print">
                 <h3 style="margin-bottom: 20px;">Generador de Recibos</h3>
@@ -388,14 +592,51 @@
                 <button class="btn-secondary" onclick="imprimirRecibo()" style="margin-left: 10px;">Imprimir / PDF</button>
             </div>
 
+            <div class="card no-print">
+                <h3 style="margin-bottom: 20px;">Aplicar Conceptos al Recibo</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Concepto del Catálogo</label>
+                        <select id="recibo-concepto"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Monto de Este Recibo ($)</label>
+                        <input type="number" id="recibo-concepto-monto" placeholder="Ej: 15000">
+                    </div>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">
+                    El concepto se aplica al empleado y al período seleccionados arriba. El monto puede variar recibo por recibo.
+                </p>
+                <button class="btn-primary" onclick="aplicarConcepto()">Aplicar al Recibo</button>
+            </div>
+
+            <div class="card no-print">
+                <h3 style="margin-bottom: 20px;">Conceptos Aplicados</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Empleado</th>
+                            <th>Período</th>
+                            <th>Concepto</th>
+                            <th>Tipo</th>
+                            <th>Monto</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-aplicaciones">
+                        <!-- Llenado por JS -->
+                    </tbody>
+                </table>
+            </div>
+
             <!-- Vista del Recibo (Visible al imprimir) -->
             <div class="card" id="vista-recibo-container" style="display: none; border: 2px solid #000; padding: 40px;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 20px;">
                     <div style="font-size: 0.9rem; line-height: 1.5;">
-                        <h2 style="font-size: 18px; text-transform: uppercase; margin-bottom: 4px;">Percepción, medios y comunicación S.A.</h2>
-                        <p><strong>CUIT:</strong> 30-71008900-7</p>
-                        <p><strong>Domicilio:</strong> De Maria 4617 1°A - CABA</p>
-                        <p><strong>Actividad:</strong> Servicios de publicidad</p>
+                        <h2 id="recibo-empresa-nombre" style="font-size: 18px; text-transform: uppercase; margin-bottom: 4px;">...</h2>
+                        <p><strong>CUIT:</strong> <span id="recibo-empresa-cuit">...</span></p>
+                        <p><strong>Domicilio:</strong> <span id="recibo-empresa-domicilio">...</span></p>
+                        <p><strong>Actividad:</strong> <span id="recibo-empresa-actividad">...</span></p>
                     </div>
                     <div style="text-align: right;">
                         <h2 style="font-size: 24px; text-transform: uppercase;">Recibo de Haberes</h2>
@@ -410,6 +651,8 @@
                     </div>
                     <div>
                         <p><strong>Puesto:</strong> <span id="render-puesto"></span></p>
+                        <p><strong>Convenio:</strong> <span id="render-convenio"></span></p>
+                        <p><strong>Categoría:</strong> <span id="render-categoria"></span></p>
                     </div>
                 </div>
 
@@ -428,8 +671,8 @@
 
                 <div style="display: flex; justify-content: space-between; align-items: center; border-top: 2px solid #000; padding-top: 20px;">
                     <div style="font-size: 0.9rem;">
-                        <p><strong>Lugar de pago:</strong> Ciudad Autónoma de Buenos Aires</p>
-                        <p><strong>Forma de pago:</strong> Transferencia bancaria</p>
+                        <p><strong>Lugar de pago:</strong> <span id="render-lugar-pago">...</span></p>
+                        <p><strong>Forma de pago:</strong> <span id="render-forma-pago">...</span></p>
                     </div>
                     <h3 style="font-size: 1.5rem;">Cobra Neto: $<span id="render-neto"></span></h3>
                 </div>

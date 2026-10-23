@@ -256,6 +256,19 @@
         }
         .action-btn.delete { color: var(--danger); }
 
+        /* Título de sección del recibo (Dec 407/2026) */
+        .recibo-sec-titulo {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            background: #EEF2FF;
+            border: 1px solid #C7D2FE;
+            color: #3730A3;
+            padding: 6px 10px;
+            margin: 18px 0 12px;
+        }
+
         /* Print Media for Recibo */
         @media print {
             body { background: white; height: auto; overflow: visible; }
@@ -264,9 +277,10 @@
             .page-content { padding: 0; display: block !important; }
             #recibo-page { display: block !important; }
             /* Hide other pages safely */
-            #empleados-page, #novedades-page, #conceptos-page, #empresas-page, #convenios-page { display: none !important; }
+            #empleados-page, #novedades-page, #conceptos-page, #convenios-page, #configrecibo-page { display: none !important; }
             
             .card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+            #vista-recibo-container, #vista-recibo-container * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
 
     </style>
@@ -290,14 +304,8 @@
             <div class="nav-item" data-tab="conceptos" onclick="switchTab('conceptos', this)">Conceptos</div>
             <div class="nav-item" data-tab="recibo" onclick="switchTab('recibo', this)">Generar Recibos</div>
             <div class="nav-separator"></div>
-            <div class="nav-item" data-tab="empresas" onclick="switchTab('empresas', this)">Empresas</div>
             <div class="nav-item" data-tab="convenios" onclick="switchTab('convenios', this)">Convenios (CCT)</div>
-        </div>
-        <div style="padding: 16px 16px 0;">
-            <label style="display: block; font-size: 0.62rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: #9CA3AF; margin-bottom: 6px;">Empresa activa</label>
-            <select id="empresa-activa-select" class="sidebar-select" onchange="cambiarEmpresa(this.value)">
-                <option value="">Sin empresas cargadas</option>
-            </select>
+            <div class="nav-item" data-tab="configrecibo" onclick="switchTab('configrecibo', this)">Aportes y Contrib.</div>
         </div>
         <a href="https://wa.me/5492665261144" target="_blank" rel="noopener" style="margin: auto 16px 8px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #25D366; color: #ffffff; text-decoration: none; padding: 12px 16px; border-radius: 8px; font-weight: 600; font-size: 0.95rem;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
@@ -312,49 +320,12 @@
             <div id="date-display" style="font-weight:500; color:var(--text-muted);">...</div>
         </div>
 
-        <!-- 0. Empresas Page (Multiempresa) -->
-        <div id="empresas-page" class="page-content">
-            <div class="card">
-                <h3 style="margin-bottom: 20px;">Empresas del Sistema</h3>
-                <p style="color: var(--text-muted); margin-bottom: 0; font-size: 0.9rem;">
-                    El sistema administra varias empresas en la misma instalación. Cada empresa tiene su
-                    <strong>propia nómina de empleados, convenios, conceptos y recibos</strong>: todo lo que cargues
-                    se guarda únicamente en la empresa seleccionada. Para trabajar con una u otra, usá el selector
-                    <strong>Empresa activa</strong> del menú lateral.
-                </p>
-            </div>
-
-            <div class="card">
-                <h3 style="margin-bottom: 20px;">Empresas Cargadas</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Empresa</th>
-                            <th>CUIT</th>
-                            <th>Domicilio</th>
-                            <th>Pago</th>
-                            <th>Empleados</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody id="lista-empresas">
-                        <!-- Llenado por JS -->
-                    </tbody>
-                </table>
-                <p style="color: var(--text-muted); margin-top: 20px; font-size: 0.85rem;">
-                    Los datos de cada empresa (razón social, CUIT, domicilio, actividad y condiciones de pago)
-                    se imprimen en el encabezado de sus recibos. Las empresas se cargan desde el estudio:
-                    para sumar una nueva empresa al sistema, comunicalo al estudio.
-                </p>
-            </div>
-        </div>
-
-        <!-- 0b. Convenios Page (CCT) -->
+        <!-- Convenios Page (CCT) -->
         <div id="convenios-page" class="page-content">
             <div class="card">
                 <h3 style="margin-bottom: 20px;">Convenio Colectivo de Trabajo (CCT)</h3>
                 <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">
-                    Cargá cualquier convenio (comercio, industria, construcción, personal de directiva, etc.) con sus <strong>categorías y sueldos básicos</strong>. Al dar de alta un empleado, elegir la categoría completa el sueldo básico automáticamente. Los convenios pertenecen a la empresa activa.
+                    Cargá cualquier convenio (comercio, industria, construcción, personal de directiva, etc.) con sus <strong>categorías y sueldos básicos</strong>. Al dar de alta un empleado, elegir la categoría completa el sueldo básico automáticamente.
                 </p>
                 <div class="form-grid">
                     <div class="form-group">
@@ -420,6 +391,85 @@
                         <!-- Llenado por JS -->
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- 0c. Config Recibo Page (Ítem 4 — Dec 407/2026) -->
+        <div id="configrecibo-page" class="page-content">
+            <div class="card">
+                <h3 style="margin-bottom: 20px;">Nuevo Formato de Recibo — Dec 407/2026 (Ítem 4)</h3>
+                <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">
+                    Los porcentajes cargados acá se aplican sobre la
+                    <strong>remuneración bruta</strong> de cada recibo: los aportes del trabajador se imprimen en la
+                    <strong>Sección 3</strong> y las contribuciones del empleador (más el gráfico de composición del costo
+                    laboral del Anexo III) en la <strong>Sección 4</strong>. Dejá en 0 los que no apliquen.
+                </p>
+                <h4 style="margin-bottom: 12px;">Aportes del trabajador — Sección 3</h4>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Jubilación (%)</label>
+                        <input type="number" id="cfg-td-jubilacion" step="0.01" min="0" placeholder="Ej: 11">
+                    </div>
+                    <div class="form-group">
+                        <label>Obra Social (%)</label>
+                        <input type="number" id="cfg-td-obrasocial" step="0.01" min="0" placeholder="Ej: 3">
+                    </div>
+                    <div class="form-group">
+                        <label>PAMI (%)</label>
+                        <input type="number" id="cfg-td-pami" step="0.01" min="0" placeholder="Ej: 1">
+                    </div>
+                    <div class="form-group">
+                        <label>Sindicato (%)</label>
+                        <input type="number" id="cfg-td-sindical" step="0.01" min="0" placeholder="Ej: 1">
+                    </div>
+                    <div class="form-group">
+                        <label>Otros (%)</label>
+                        <input type="number" id="cfg-td-otros" step="0.01" min="0" placeholder="0">
+                    </div>
+                </div>
+                <h4 style="margin: 10px 0 12px;">Contribuciones del empleador — Sección 4</h4>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Jubilación patronal (%)</label>
+                        <input type="number" id="cfg-em-jubilacion" step="0.01" min="0" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Obra Social patronal (%)</label>
+                        <input type="number" id="cfg-em-obrasocial" step="0.01" min="0" placeholder="Ej: 6.5">
+                    </div>
+                    <div class="form-group">
+                        <label>PAMI patronal (%)</label>
+                        <input type="number" id="cfg-em-pami" step="0.01" min="0" placeholder="Ej: 1.5">
+                    </div>
+                    <div class="form-group">
+                        <label>ART (%)</label>
+                        <input type="number" id="cfg-em-art" step="0.01" min="0" placeholder="Ej: 2">
+                    </div>
+                    <div class="form-group">
+                        <label>Sindicato patronal (%)</label>
+                        <input type="number" id="cfg-em-sindical" step="0.01" min="0" placeholder="Ej: 1.5">
+                    </div>
+                    <div class="form-group">
+                        <label>Cámaras (%)</label>
+                        <input type="number" id="cfg-em-camaras" step="0.01" min="0" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Otros (%)</label>
+                        <input type="number" id="cfg-em-otros" step="0.01" min="0" placeholder="0">
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="guardarConfigRecibo()">Guardar Configuración</button>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom: 12px;">Cómo se calcula</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">
+                    Importe = Remuneración bruta (sueldo + haberes del período) × % cargado.
+                    Los aportes del trabajador aparecen como deducciones automáticas del recibo:
+                    <strong>no vuelvas a cargar esos mismos conceptos a mano</strong> en la pestaña Generar Recibos
+                    (evitarías un doble descuento). Las contribuciones del empleador no descuentan nada al empleado:
+                    suman al <strong>costo total laboral</strong> del gráfico Anexo III.
+                </p>
             </div>
         </div>
 
@@ -629,9 +679,12 @@
                 </table>
             </div>
 
-            <!-- Vista del Recibo (Visible al imprimir) -->
+            <!-- Vista del Recibo (Visible al imprimir) — Nuevo Formato Dec 407/2026 -->
             <div class="card" id="vista-recibo-container" style="display: none; border: 2px solid #000; padding: 40px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 20px;">
+
+                <!-- SECCIÓN 1 -->
+                <div class="recibo-sec-titulo">Sección 1 — Identificación del empleador, del trabajador y del período</div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 16px;">
                     <div style="font-size: 0.9rem; line-height: 1.5;">
                         <h2 id="recibo-empresa-nombre" style="font-size: 18px; text-transform: uppercase; margin-bottom: 4px;">...</h2>
                         <p><strong>CUIT:</strong> <span id="recibo-empresa-cuit">...</span></p>
@@ -644,7 +697,7 @@
                     </div>
                 </div>
 
-                <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                     <div>
                         <p><strong>Empleado:</strong> <span id="render-nombre"></span></p>
                         <p><strong>CUIL/DNI:</strong> <span id="render-cuil"></span></p>
@@ -656,26 +709,78 @@
                     </div>
                 </div>
 
-                <table style="margin-bottom: 30px; width: 100%; border: 1px solid #ccc;">
+                <!-- SECCIÓN 2 -->
+                <div class="recibo-sec-titulo">Sección 2 — Remuneración</div>
+                <table style="margin-bottom: 8px; width: 100%; border: 1px solid #ccc;">
                     <thead>
                         <tr style="background-color: #f9fafb;">
                             <th style="border: 1px solid #ccc; padding: 8px;">Concepto</th>
-                            <th style="border: 1px solid #ccc; padding: 8px; text-align: right;">Haberes (+)</th>
-                            <th style="border: 1px solid #ccc; padding: 8px; text-align: right;">Deducciones (-)</th>
+                            <th style="border: 1px solid #ccc; padding: 8px; text-align: right;">Importe (+)</th>
                         </tr>
                     </thead>
-                    <tbody id="render-conceptos">
-                        <!-- Conceptos JS -->
-                    </tbody>
+                    <tbody id="render-haberes"></tbody>
+                    <tfoot>
+                        <tr style="background-color: #f3f4f6;">
+                            <td style="border: 1px solid #ccc; padding: 8px;"><strong>TOTAL REMUNERACIÓN BRUTA</strong></td>
+                            <td style="border: 1px solid #ccc; padding: 8px; text-align: right;"><strong>$<span id="render-total-haberes">0</span></strong></td>
+                        </tr>
+                    </tfoot>
                 </table>
 
-                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 2px solid #000; padding-top: 20px;">
+                <!-- SECCIÓN 3 -->
+                <div class="recibo-sec-titulo">Sección 3 — Deducciones (aportes del trabajador y otras retenciones)</div>
+                <table style="margin-bottom: 16px; width: 100%; border: 1px solid #ccc;">
+                    <thead>
+                        <tr style="background-color: #f9fafb;">
+                            <th style="border: 1px solid #ccc; padding: 8px;">Concepto</th>
+                            <th style="border: 1px solid #ccc; padding: 8px; text-align: right;">Importe (−)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="render-deducciones"></tbody>
+                    <tfoot>
+                        <tr style="background-color: #f3f4f6;">
+                            <td style="border: 1px solid #ccc; padding: 8px;"><strong>TOTAL DEDUCCIONES</strong></td>
+                            <td style="border: 1px solid #ccc; padding: 8px; text-align: right;"><strong>$<span id="render-total-deducciones">0</span></strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <div style="font-size: 0.9rem;">
                         <p><strong>Lugar de pago:</strong> <span id="render-lugar-pago">...</span></p>
                         <p><strong>Forma de pago:</strong> <span id="render-forma-pago">...</span></p>
                     </div>
                     <h3 style="font-size: 1.5rem;">Cobra Neto: $<span id="render-neto"></span></h3>
                 </div>
+
+                <!-- SECCIÓN 4 -->
+                <div class="recibo-sec-titulo">Sección 4 — Aportes y contribuciones del empleador y composición del costo laboral (Anexo III, Dec 407/2026)</div>
+                <table style="margin-bottom: 16px; width: 100%; border: 1px solid #ccc;">
+                    <thead>
+                        <tr style="background-color: #f9fafb;">
+                            <th style="border: 1px solid #ccc; padding: 8px;">Aporte / Contribución</th>
+                            <th style="border: 1px solid #ccc; padding: 8px; text-align: right;">%</th>
+                            <th style="border: 1px solid #ccc; padding: 8px; text-align: right;">Importe</th>
+                        </tr>
+                    </thead>
+                    <tbody id="render-contribuciones"></tbody>
+                    <tfoot>
+                        <tr style="background-color: #f3f4f6;">
+                            <td style="border: 1px solid #ccc; padding: 8px;"><strong>TOTAL APORTES Y CONTRIBUCIONES</strong></td>
+                            <td style="border: 1px solid #ccc; padding: 8px;"></td>
+                            <td style="border: 1px solid #ccc; padding: 8px; text-align: right;"><strong>$<span id="render-total-contribuciones">0</span></strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; font-size: 0.85rem;">
+                    <div style="border: 1px solid #ccc; padding: 8px;"><strong>Remuneración bruta</strong><br>$<span id="render-resumen-haberes">0</span></div>
+                    <div style="border: 1px solid #ccc; padding: 8px;"><strong>Deducciones</strong><br>($<span id="render-resumen-deducciones">0</span>)</div>
+                    <div style="border: 1px solid #ccc; padding: 8px;"><strong>Neto pagado</strong><br>$<span id="render-resumen-neto">0</span></div>
+                    <div style="border: 1px solid #ccc; padding: 8px; background: #EEF2FF;"><strong>Costo total laboral</strong><br>$<span id="render-costo-laboral">0</span></div>
+                </div>
+
+                <div id="render-grafico" style="border: 1px solid #ccc; padding: 12px;"></div>
 
                 <div style="margin-top: 80px; display: flex; justify-content: space-around;">
                     <div style="text-align: center; width: 250px; border-top: 1px dashed #000; padding-top: 10px;">
